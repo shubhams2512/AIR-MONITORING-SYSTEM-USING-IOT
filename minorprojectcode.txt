@@ -1,0 +1,88 @@
+#include <MQ135.h>
+#include <dht.h>
+#include<SoftwareSerial.h>  
+#define DHTTYPE  DHT11 
+DHT dht(DHTPIN, DHTTYPE);
+
+char auth[] = "GhKDkiL0WaD2RD9Slh0BzIhlkqMBpA6E";       // You should get Auth Token in the Blynk App.
+char ssid[] = "Hrishikesh";                       // Your WiFi credentials.
+char pass[] = "123456789";
+
+
+void setup ()
+{
+Serial.begin(115200);         
+ ser.begin(115200);
+ dht.begin();
+ ser.println("AT");
+ delay(1000);
+ ser.println("AT+RST");
+ delay(1000);
+ ser.println("AT+CWMODE=1");
+ delay(1000);
+ ser.println("AT+CWJAP=\"Hrishikesh\",\"123456789\"");
+ delay(1000);
+}
+
+
+void loop()
+ {
+ MQ135 gasSensor = MQ135(A0); // Attach sensor to pin A0
+ float rzero = gasSensor.getRZero(); 
+ Serial.println (rzero);
+ delay(1000);
+ int chk = DHT.read11(DHT11_PIN);
+  Serial.print("Temp: ");
+  Serial.print(DHT.temperature);
+  Serial.print((char)223);
+  Serial.print("C");
+  Serial.print("Humidity: ");
+  Serial.print(DHT.humidity);
+  Serial.print("%");
+  delay(1000);
+ float humidity=DHT.humidity();
+ float temperature=DHT.temperature();
+ String field1=String(humidity);
+ String field2=String(temperature); 
+ String field3=String(rzero);
+ String cmd = "AT+CIPSTART=\"TCP\",\""; //transmission control protocol
+ cmd += "184.106.153.149"; // api.thingspeak.com
+ cmd += "\",80"; //instantiate server at port 80 (http port)hyper text transfer protocol4
+ ser.println(cmd);
+ Serial.println(cmd);
+   
+ if(ser.find("Error")){
+  Serial.println("AT+CIPSTART error");
+    return;
+  }
+ String getStr = "GET /update?api_key=";
+  getStr += apiKey;
+  getStr +="&field1=";
+  getStr += String(field1);
+  getStr +="&field2=";
+  getStr += String(field2);
+  getStr +="&field3=";
+  getStr += String(field3);
+  getStr += "\r\n\r\n";
+  cmd = "AT+CIPSEND=";       
+  cmd += String(getStr.length());
+  ser.println(cmd);
+  Serial.println(cmd);
+
+  if(ser.find(">")){
+    ser.print(getStr);
+    Serial.print(getStr);
+  }
+  else{
+    ser.println("AT+CIPCLOSE");  
+   
+    Serial.println("AT+CIPCLOSE");
+  }
+ 
+  delay(1000);  
+
+Blynk.virtualWrite(field1);
+Blynk.virtualWrite(field2);
+Blynk.virtualWrite(field3);
+}
+
